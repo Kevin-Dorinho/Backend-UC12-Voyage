@@ -1,12 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Q76AfW/kA/k=",
+  "dgSpecHash": "5rEwXYRC5BE=",
   "success": true,
-  "projectFilePath": "C:\\Users\\kevin.cdorinho\\source\\repos\\Backend-UC12-Voyage\\Backend-UC12-Voyage\\Backend-UC12-Voyage.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\kevin.cdorinho\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
-    "C:\\Users\\kevin.cdorinho\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
-    "C:\\Users\\kevin.cdorinho\\.nuget\\packages\\mysqlconnector\\2.6.2\\mysqlconnector.2.6.2.nupkg.sha512"
-  ],
+  "projectFilePath": "C:\\Users\\jonas.gscarmo\\Documents\\GitHub\\Backend-UC12-Voyage\\Backend-UC12-Voyage\\Backend-UC12-Voyage.csproj",
+  "expectedPackageFiles": [],
   "logs": []
 }
