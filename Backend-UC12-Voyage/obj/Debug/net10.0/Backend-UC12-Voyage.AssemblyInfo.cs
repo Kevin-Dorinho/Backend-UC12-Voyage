@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Backend-UC12-Voyage")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+21e1f0d8ce32820be96585561923d1904c020fd6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4f2fc0040efed943af44cb869de2347fbdc49211")]
 [assembly: System.Reflection.AssemblyProductAttribute("Backend-UC12-Voyage")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Backend-UC12-Voyage")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
