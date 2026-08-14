@@ -52,8 +52,34 @@ public class Company
         }
     }
 
+    public static async Task<bool> ExisteAsync(int id)
+    {
+        string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
+        using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
+        using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
+        await conexao.OpenAsync();
+        var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
+        return count > 0;
+    }
+
+    public async Task ValidarAsync()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("O nome da empresa não pode ser vazio.");
+
+        if (!ValidadorCpfCnpj.ValidarCNPJ(cnpj))
+            throw new ArgumentException("O CNPJ informado é inválido (falha na validação do Módulo 11).");
+
+        bool usuarioExiste = await User.ExisteAsync(user_id);
+        if (!usuarioExiste)
+            throw new ArgumentException($"O ID de usuário ({user_id}) informado para a empresa não existe.");
+    }
+
     public async Task InserirAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        INSERT INTO {tabela}
                        (name, category, cnpj, evaluate, places, user_id, created_at, updated_at)
@@ -139,6 +165,8 @@ public class Company
 
     public async Task AtualizarAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        UPDATE {tabela}
                        SET name = @name,

@@ -43,8 +43,33 @@ public class User
         return Convert.ToHexString(bytes).ToLower();
     }
 
+    public static async Task<bool> ExisteAsync(int id)
+    {
+        string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
+        using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
+        using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
+        await conexao.OpenAsync();
+        var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
+        return count > 0;
+    }
+
+    public async Task ValidarAsync()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("O nome do usuário não pode ser vazio.");
+
+        if (!ValidadorCpfCnpj.ValidarEmail(email))
+            throw new ArgumentException("O e-mail informado é inválido.");
+
+        if (!ValidadorCpfCnpj.ValidarCPF(cpf))
+            throw new ArgumentException("O CPF informado é inválido (falha na validação do Módulo 11).");
+    }
+
     public async Task InserirAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        INSERT INTO {tabela}
                        (name, type, email, password, phone, cpf)
@@ -69,11 +94,12 @@ public class User
     {
         string query = $"""
                        SELECT * FROM {tabela}
-                       WHERE id = {id};
+                       WHERE id = @id;
                        """;
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
 
         await conexao.OpenAsync();
         await using var dados = await comando.ExecuteReaderAsync();
@@ -121,6 +147,8 @@ public class User
 
     public async Task AlterarAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        UPDATE {tabela}
                        SET name = @name,
@@ -150,11 +178,12 @@ public class User
     {
         string query = $"""
                        DELETE FROM {tabela}
-                       WHERE id = {id};
+                       WHERE id = @id;
                        """;
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
 
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();

@@ -41,8 +41,32 @@ public class Payment
         this.type = type;
     }
 
+    public async Task ValidarAsync()
+    {
+        if (company_id <= 0)
+            throw new ArgumentException("O ID da empresa deve ser maior que zero.");
+
+        bool empresaExiste = await Company.ExisteAsync(company_id);
+        if (!empresaExiste)
+            throw new ArgumentException($"A empresa com ID ({company_id}) não existe.");
+
+        if (due_date < to_date)
+            throw new ArgumentException("A data de vencimento (due_date) não pode ser anterior à data inicial (to_date).");
+
+        if (string.IsNullOrWhiteSpace(payment_form))
+            throw new ArgumentException("A forma de pagamento não pode ser vazia.");
+
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("A chave do pagamento não pode ser vazia.");
+
+        if (string.IsNullOrWhiteSpace(type))
+            throw new ArgumentException("O tipo do pagamento não pode ser vazio.");
+    }
+
     public async Task InserirAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        INSERT INTO {tabela}
                        (company_id, to_date, due_date, payment_form, advertising, `key`, `type`)
@@ -68,11 +92,12 @@ public class Payment
     {
         string query = $"""
                        SELECT * FROM {tabela}
-                       WHERE id = {id};
+                       WHERE id = @id;
                        """;
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
 
         await conexao.OpenAsync();
         await using var dados = await comando.ExecuteReaderAsync();
@@ -122,6 +147,8 @@ public class Payment
 
     public async Task AlterarAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        UPDATE {tabela}
                        SET company_id = @company_id,

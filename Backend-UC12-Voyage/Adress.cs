@@ -72,8 +72,33 @@ public class Address
         }
     }
 
+    public static async Task<bool> ExisteAsync(int id)
+    {
+        string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
+        using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
+        using var comando = new MySqlCommand(query, conexao);
+        comando.Parameters.AddWithValue("id", id);
+        await conexao.OpenAsync();
+        var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
+        return count > 0;
+    }
+
+    public async Task ValidarAsync()
+    {
+        if (string.IsNullOrWhiteSpace(place))
+            throw new ArgumentException("O logradouro/rua não pode ser vazio.");
+
+        if (string.IsNullOrWhiteSpace(number))
+            throw new ArgumentException("O número não pode ser vazio.");
+
+        if (!ValidadorCpfCnpj.ValidarCEP(zipcode))
+            throw new ArgumentException("O CEP informado é inválido (deve conter 8 dígitos).");
+    }
+
     public async Task<int> InserirAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        INSERT INTO {tabela}
                        (place, number, zipcode, lat, `long`, url)
@@ -106,6 +131,8 @@ public class Address
 
     public async Task EditarAsync()
     {
+        await ValidarAsync();
+
         string query = $"""
                        UPDATE {tabela}
                        SET place = @place, number = @number, zipcode = @zipcode, lat = @lat, `long` = @long, url = @url, updatedAt = NOW()
