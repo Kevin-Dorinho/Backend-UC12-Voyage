@@ -8,7 +8,7 @@ public class Company
     public string cnpj { get; set; } = string.Empty;
     public double evaluate { get; set; }
     public string places { get; set; } = string.Empty;
-    public int user_id { get; set; }
+    public User user { get; set; }
     public DateTime criado_em { get; set; }
     public DateTime atualizado_em { get; set; }
 
@@ -16,7 +16,7 @@ public class Company
 
     public Company() { }
 
-    public Company(int id, string name, string category, string cnpj, double evaluate, string places, int user_id, DateTime criado_em, DateTime atualizado_em)
+    public Company(int id, string name, string category, string cnpj, double evaluate, string places, User user, DateTime criado_em, DateTime atualizado_em)
     {
         this.id = id;
         this.name = name;
@@ -24,24 +24,24 @@ public class Company
         this.cnpj = cnpj;
         this.evaluate = evaluate;
         this.places = places;
-        this.user_id = user_id;
+        this.user = user;
         this.criado_em = criado_em;
         this.atualizado_em = atualizado_em;
     }
 
-    public Company(string name, string category, string cnpj, string places, int user_id, double evaluate = 0)
+    public Company(string name, string category, string cnpj, string places, User user, double evaluate = 0)
     {
         this.name = name;
         this.category = category;
         this.cnpj = cnpj;
         this.places = places;
-        this.user_id = user_id;
+        this.user = user;
         this.evaluate = evaluate;
     }
 
     public void Mostrar()
     {
-        Console.WriteLine($"[{id}] - {name} | Categoria: {category} | CNPJ: {cnpj} | Avaliação: {evaluate} | Endereço: {places} | ID Usuário: {user_id} | Criado em: {criado_em}");
+        Console.WriteLine($"[{id}] - {name} | Categoria: {category} | CNPJ: {cnpj} | Avaliação: {evaluate} | Endereço: {places} | ID Usuário: {user?.id} | Criado em: {criado_em}");
     }
 
     public void Mostrar(List<Company> empresas)
@@ -69,7 +69,7 @@ public class Company
         comando.Parameters.AddWithValue("cnpj", cnpj);
         comando.Parameters.AddWithValue("evaluate", evaluate);
         comando.Parameters.AddWithValue("places", places);
-        comando.Parameters.AddWithValue("user_id", user_id);
+        comando.Parameters.AddWithValue("user_id", user?.id);
 
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();
@@ -97,7 +97,7 @@ public class Company
             this.cnpj = dados.GetString("cnpj");
             this.evaluate = dados.GetDouble("evaluate");
             this.places = dados.GetString("places");
-            this.user_id = dados.GetInt32("user_id");
+            this.user = new User { id = dados.GetInt32("user_id") };
             this.criado_em = dados.GetDateTime("created_at");
             this.atualizado_em = dados.GetDateTime("updated_at");
         }
@@ -127,7 +127,7 @@ public class Company
                 cnpj = dados.GetString("cnpj"),
                 evaluate = dados.GetDouble("evaluate"),
                 places = dados.GetString("places"),
-                user_id = dados.GetInt32("user_id"),
+                user = new User { id = dados.GetInt32("user_id") },
                 criado_em = dados.GetDateTime("created_at"),
                 atualizado_em = dados.GetDateTime("updated_at")
             };
@@ -160,7 +160,7 @@ public class Company
         comando.Parameters.AddWithValue("cnpj", cnpj);
         comando.Parameters.AddWithValue("evaluate", evaluate);
         comando.Parameters.AddWithValue("places", places);
-        comando.Parameters.AddWithValue("user_id", user_id);
+        comando.Parameters.AddWithValue("user_id", user?.id);
 
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();
