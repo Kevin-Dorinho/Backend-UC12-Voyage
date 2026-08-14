@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 public class Payment
 {
     public int id { get; set; }
-    public int company_id { get; set; }
+    public Company company { get; set; }
     public DateTime to_date { get; set; }
     public DateTime due_date { get; set; }
     public string payment_form { get; set; }
@@ -18,10 +18,10 @@ public class Payment
 
     public Payment() { }
 
-    public Payment(int id, int company_id, DateTime to_date, DateTime due_date, string payment_form, string advertising, string key, string type)
+    public Payment(int id, Company company, DateTime to_date, DateTime due_date, string payment_form, string advertising, string key, string type)
     {
         this.id = id;
-        this.company_id = company_id;
+        this.company = company;
         this.to_date = to_date;
         this.due_date = due_date;
         this.payment_form = payment_form;
@@ -30,9 +30,9 @@ public class Payment
         this.type = type;
     }
 
-    public Payment(int company_id, DateTime to_date, DateTime due_date, string payment_form, string advertising, string key, string type)
+    public Payment(Company company, DateTime to_date, DateTime due_date, string payment_form, string advertising, string key, string type)
     {
-        this.company_id = company_id;
+        this.company = company;
         this.to_date = to_date;
         this.due_date = due_date;
         this.payment_form = payment_form;
@@ -76,7 +76,7 @@ public class Payment
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("company_id", company_id);
+        comando.Parameters.AddWithValue("company_id", company?.id);
         comando.Parameters.AddWithValue("to_date", to_date);
         comando.Parameters.AddWithValue("due_date", due_date);
         comando.Parameters.AddWithValue("payment_form", payment_form);
@@ -105,7 +105,7 @@ public class Payment
         while (await dados.ReadAsync())
         {
             this.id = dados.GetInt32("id");
-            this.company_id = dados.GetInt32("company_id");
+            this.company = new Company { id = dados.GetInt32("company_id") };
             this.to_date = dados.GetDateTime("to_date");
             this.due_date = dados.GetDateTime("due_date");
             this.payment_form = dados.GetString("payment_form");
@@ -132,7 +132,7 @@ public class Payment
         {
             Payment payment = new Payment();
             payment.id = dados.GetInt32("id");
-            payment.company_id = dados.GetInt32("company_id");
+            payment.company = new Company { id = dados.GetInt32("company_id") };
             payment.to_date = dados.GetDateTime("to_date");
             payment.due_date = dados.GetDateTime("due_date");
             payment.payment_form = dados.GetString("payment_form");
@@ -164,7 +164,7 @@ public class Payment
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
         comando.Parameters.AddWithValue("id", id);
-        comando.Parameters.AddWithValue("company_id", company_id);
+        comando.Parameters.AddWithValue("company_id", company?.id);
         comando.Parameters.AddWithValue("to_date", to_date);
         comando.Parameters.AddWithValue("due_date", due_date);
         comando.Parameters.AddWithValue("payment_form", payment_form);
