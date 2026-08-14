@@ -1,4 +1,5 @@
-﻿UsuarioJhonas();
+AdressMatheus();
+
 async void UsuarioJhonas()
 {
 
@@ -201,8 +202,6 @@ async void UsuarioJhonas()
         }
     }
 }
-
-
 
 async void EmpresaKevin()
 {
@@ -437,4 +436,345 @@ async void EmpresaKevin()
         }
     }
 
+}
+
+async void AdressMatheus()
+{
+    Address addressService = new Address();
+    bool executing = true;
+
+    while (executing)
+    {
+        Console.Clear();
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine("==================================================");
+        Console.WriteLine("          VOYAGE - TESTES DE ENDEREÇOS            ");
+        Console.WriteLine("==================================================");
+        Console.ResetColor();
+        Console.WriteLine("1. Listar todos os endereços");
+        Console.WriteLine("2. Listar um único endereço");
+        Console.WriteLine("3. Buscar por Lat + Long (Raio de busca)");
+        Console.WriteLine("4. Filtrar por Companhia");
+        Console.WriteLine("5. Listar por Categoria");
+        Console.WriteLine("6. Listar por Favoritos (Usuário)");
+        Console.WriteLine("7. Criar novo endereço");
+        Console.WriteLine("8. Editar um endereço");
+        Console.WriteLine("9. Excluir um endereço");
+        Console.WriteLine("0. Sair");
+        Console.WriteLine("==================================================");
+        Console.Write("Escolha uma opção: ");
+
+        string opcao = Console.ReadLine();
+        Console.WriteLine();
+
+        try
+        {
+            switch (opcao)
+            {
+                case "1":
+                    await ListarTodosEnderecos();
+                    break;
+                case "2":
+                    await ListarUnicoEndereco();
+                    break;
+                case "3":
+                    await BuscarPorRaio();
+                    break;
+                case "4":
+                    await FiltrarPorCompanhia();
+                    break;
+                case "5":
+                    await ListarPorCategoria();
+                    break;
+                case "6":
+                    await ListarPorFavoritos();
+                    break;
+                case "7":
+                    await CriarEndereco();
+                    break;
+                case "8":
+                    await EditarEndereco();
+                    break;
+                case "9":
+                    await ExcluirEndereco();
+                    break;
+                case "0":
+                    executing = false;
+                    Console.WriteLine("Saindo...");
+                    break;
+                default:
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Opção inválida!");
+                    Console.ResetColor();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Erro: {ex.Message}");
+            Console.ResetColor();
+        }
+
+        if (executing)
+        {
+            Console.WriteLine("\nPressione qualquer tecla para continuar...");
+            Console.ReadKey();
+        }
+    }
+
+    async Task ListarTodosEnderecos()
+    {
+        Console.WriteLine("--- LISTANDO TODOS OS ENDEREÇOS ---");
+        var addresses = await addressService.BuscarTodosAsync();
+        if (addresses.Count == 0)
+        {
+            Console.WriteLine("Nenhum endereço cadastrado.");
+        }
+        else
+        {
+            addressService.Mostrar(addresses);
+        }
+    }
+
+    async Task ListarUnicoEndereco()
+    {
+        Console.Write("Digite o ID do endereço: ");
+        if (int.TryParse(Console.ReadLine(), out int id))
+        {
+            Address address = new Address();
+            await address.BuscarAsync(id);
+            if (address.id != 0)
+            {
+                address.Mostrar();
+            }
+            else
+            {
+                Console.WriteLine($"Endereço com ID {id} não encontrado.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("ID inválido.");
+        }
+    }
+
+    async Task BuscarPorRaio()
+    {
+        Console.Write("Digite a Latitude (ex: -23.5505): ");
+        if (!double.TryParse(Console.ReadLine(), out double lat)) return;
+
+        Console.Write("Digite a Longitude (ex: -46.6333): ");
+        if (!double.TryParse(Console.ReadLine(), out double lon)) return;
+
+        Console.Write("Deseja usar raio customizado? (s/N): ");
+        string custom = Console.ReadLine();
+        double radius = 5.0; // Padrão 5km
+
+        if (custom.ToLower() == "s")
+        {
+            Console.Write("Digite o raio (em km): ");
+            double.TryParse(Console.ReadLine(), out radius);
+        }
+
+        Console.WriteLine($"\nBuscando endereços num raio de {radius}km de ({lat}, {lon})...");
+        var results = await addressService.BuscarPorRaioAsync(lat, lon, radius);
+        if (results.Count == 0)
+        {
+            Console.WriteLine("Nenhum endereço encontrado nesse raio.");
+        }
+        else
+        {
+            addressService.Mostrar(results);
+        }
+    }
+
+    async Task FiltrarPorCompanhia()
+    {
+        Console.Write("Digite o ID da Companhia: ");
+        if (int.TryParse(Console.ReadLine(), out int companyId))
+        {
+            var results = await addressService.BuscarPorCompanhiaAsync(companyId);
+            if (results.Count == 0)
+            {
+                Console.WriteLine("Nenhum endereço associado a esta companhia.");
+            }
+            else
+            {
+                addressService.Mostrar(results);
+            }
+        }
+    }
+
+    async Task ListarPorCategoria()
+    {
+        Console.Write("Digite a Categoria (ex: Alimentação, Beleza): ");
+        string category = Console.ReadLine();
+
+        var results = await addressService.BuscarPorCategoriaAsync(category);
+        if (results.Count == 0)
+        {
+            Console.WriteLine("Nenhum endereço encontrado para esta categoria.");
+        }
+        else
+        {
+            addressService.Mostrar(results);
+        }
+    }
+
+    async Task ListarPorFavoritos()
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine("Opções de favoritos:");
+        Console.WriteLine("1. Endereços de Companhias Favoritadas pelo usuário (tabela favorites)");
+        Console.WriteLine("2. Endereços Próprios do Usuário (tabela _addressUser)");
+        Console.ResetColor();
+        Console.Write("Escolha uma opção: ");
+        string opt = Console.ReadLine();
+
+        Console.Write("Digite o ID do Usuário: ");
+        if (int.TryParse(Console.ReadLine(), out int userId))
+        {
+            List<Address> results;
+            if (opt == "2")
+            {
+                results = await addressService.BuscarPorUsuarioAsync(userId);
+            }
+            else
+            {
+                results = await addressService.BuscarPorFavoritosAsync(userId);
+            }
+
+            if (results.Count == 0)
+            {
+                Console.WriteLine("Nenhum endereço encontrado.");
+            }
+            else
+            {
+                addressService.Mostrar(results);
+            }
+        }
+    }
+
+    async Task CriarEndereco()
+    {
+        Console.WriteLine("--- CRIAR ENDEREÇO ---");
+        Console.Write("Endereço (Nome da rua): ");
+        string place = Console.ReadLine();
+
+        Console.Write("Número: ");
+        string number = Console.ReadLine();
+
+        Console.Write("Adicionar URL da Imagem: ");
+        string url = Console.ReadLine();
+
+        Console.Write("CEP (Zipcode): ");
+        string zipcode = Console.ReadLine();
+
+        var (lat, lon) = await Address.ObterCoordenadasIncrementadasAsync();
+        Console.WriteLine($"\n[Coordenadas Geradas Automaticamente (Auto-Incrementadas)]");
+        Console.WriteLine($"Latitude: {lat:F6}");
+        Console.WriteLine($"Longitude: {lon:F6}");
+
+        Address newAddress = new Address(place, number, zipcode, lat, lon, url);
+        int addressId = await newAddress.InserirAsync();
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"Endereço criado com sucesso! ID: {addressId}");
+        Console.ResetColor();
+
+        Console.Write("Deseja colocar este endereço nos favoritos de um usuário? (s/N): ");
+        string fav = Console.ReadLine();
+        if (fav.ToLower() == "s")
+        {
+            Console.Write("Digite o ID do Usuário: ");
+            if (int.TryParse(Console.ReadLine(), out int userId))
+            {
+                await Address.AdicionarAoUsuarioAsync(addressId, userId);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"Endereço associado ao usuário {userId} com sucesso!");
+                Console.ResetColor();
+            }
+        }
+    }
+
+    async Task EditarEndereco()
+    {
+        Console.WriteLine("--- EDITAR ENDEREÇO ---");
+        Console.Write("Digite o ID do endereço que deseja editar: ");
+        if (int.TryParse(Console.ReadLine(), out int id))
+        {
+            Address address = new Address();
+            await address.BuscarAsync(id);
+            if (address.id == 0)
+            {
+                Console.WriteLine("Endereço não encontrado.");
+                return;
+            }
+
+            Console.WriteLine("Valores atuais:");
+            address.Mostrar();
+            Console.WriteLine("\nDeixe em branco para manter o valor atual.");
+
+            Console.Write($"Endereço (Rua) [{address.place}]: ");
+            string place = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(place)) address.place = place;
+
+            Console.Write($"Número [{address.number}]: ");
+            string number = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(number)) address.number = number;
+
+            Console.Write($"URL da Imagem [{address.url}]: ");
+            string url = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(url)) address.url = url;
+
+            Console.Write($"CEP [{address.zipcode}]: ");
+            string zipcode = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(zipcode)) address.zipcode = zipcode;
+
+            Console.Write($"Latitude [{address.lat}]: ");
+            string latInput = Console.ReadLine();
+            if (double.TryParse(latInput, out double lat)) address.lat = lat;
+
+            Console.Write($"Longitude [{address.@long}]: ");
+            string lonInput = Console.ReadLine();
+            if (double.TryParse(lonInput, out double lon)) address.@long = lon;
+
+            await address.EditarAsync();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("Endereço atualizado com sucesso!");
+            Console.ResetColor();
+        }
+    }
+
+    async Task ExcluirEndereco()
+    {
+        Console.WriteLine("--- EXCLUIR ENDEREÇO ---");
+        Console.Write("Digite o ID do endereço que deseja excluir: ");
+        if (int.TryParse(Console.ReadLine(), out int id))
+        {
+            Address address = new Address();
+            await address.BuscarAsync(id);
+            if (address.id == 0)
+            {
+                Console.WriteLine("Endereço não encontrado.");
+                return;
+            }
+
+            Console.WriteLine("Valores do endereço a ser excluído:");
+            address.Mostrar();
+            Console.Write("Tem certeza que deseja excluir este endereço? (s/N): ");
+            string confirm = Console.ReadLine();
+            if (confirm.ToLower() == "s")
+            {
+                await Address.DeletarAsync(id);
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("Endereço excluído com sucesso!");
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine("Exclusão cancelada.");
+            }
+        }
+    }
 }
