@@ -43,12 +43,12 @@ public class Payment
 
     public async Task ValidarAsync()
     {
-        if (company_id <= 0)
+        if (company == null || company.id <= 0)
             throw new ArgumentException("O ID da empresa deve ser maior que zero.");
 
-        bool empresaExiste = await Company.ExisteAsync(company_id);
+        bool empresaExiste = await Company.ExisteAsync(company);
         if (!empresaExiste)
-            throw new ArgumentException($"A empresa com ID ({company_id}) não existe.");
+            throw new ArgumentException($"A empresa com ID ({company.id}) não existe.");
 
         if (due_date < to_date)
             throw new ArgumentException("A data de vencimento (due_date) não pode ser anterior à data inicial (to_date).");
@@ -176,7 +176,7 @@ public class Payment
         await comando.ExecuteNonQueryAsync();
     }
 
-    public async Task ExcluirAsync(int idExclusao)
+    public async Task ExcluirAsync(Payment payment)
     {
         string query = $"""
                        DELETE FROM {tabela}
@@ -185,7 +185,7 @@ public class Payment
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("id", idExclusao);
+        comando.Parameters.AddWithValue("id", payment.id);
 
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();

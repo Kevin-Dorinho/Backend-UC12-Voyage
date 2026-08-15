@@ -52,12 +52,12 @@ public class Company
         }
     }
 
-    public static async Task<bool> ExisteAsync(int id)
+    public static async Task<bool> ExisteAsync(Company company)
     {
         string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("id", id);
+        comando.Parameters.AddWithValue("id", company.id);
         await conexao.OpenAsync();
         var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
         return count > 0;
@@ -71,9 +71,12 @@ public class Company
         if (!ValidadorCpfCnpj.ValidarCNPJ(cnpj))
             throw new ArgumentException("O CNPJ informado é inválido (falha na validação do Módulo 11).");
 
-        bool usuarioExiste = await User.ExisteAsync(user_id);
+        if (user == null || user.id <= 0)
+            throw new ArgumentException("O ID de usuário é obrigatório e deve ser maior que zero.");
+
+        bool usuarioExiste = await User.ExisteAsync(user);
         if (!usuarioExiste)
-            throw new ArgumentException($"O ID de usuário ({user_id}) informado para a empresa não existe.");
+            throw new ArgumentException($"O ID de usuário ({user.id}) informado para a empresa não existe.");
     }
 
     public async Task InserirAsync()
@@ -194,7 +197,7 @@ public class Company
         await comando.ExecuteNonQueryAsync();
     }
 
-    public async Task DeletarAsync(int id)
+    public async Task DeletarAsync(Company company)
     {
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         await conexao.OpenAsync();
@@ -205,28 +208,28 @@ public class Company
             // 1. Remover dependências em address_company (endereços vinculados)
             using (var cmd1 = new MySqlCommand("DELETE FROM address_company WHERE company_id = @id;", conexao, transacao))
             {
-                cmd1.Parameters.AddWithValue("id", id);
+                cmd1.Parameters.AddWithValue("id", company.id);
                 await cmd1.ExecuteNonQueryAsync();
             }
 
             // 2. Remover dependências em favorites (favoritos)
             using (var cmd2 = new MySqlCommand("DELETE FROM favorites WHERE company_id = @id;", conexao, transacao))
             {
-                cmd2.Parameters.AddWithValue("id", id);
+                cmd2.Parameters.AddWithValue("id", company.id);
                 await cmd2.ExecuteNonQueryAsync();
             }
 
             // 3. Remover dependências em payments (pagamentos/anúncios)
             using (var cmd3 = new MySqlCommand("DELETE FROM payments WHERE company_id = @id;", conexao, transacao))
             {
-                cmd3.Parameters.AddWithValue("id", id);
+                cmd3.Parameters.AddWithValue("id", company.id);
                 await cmd3.ExecuteNonQueryAsync();
             }
 
             // 4. Remover a empresa da tabela companies
             using (var cmd4 = new MySqlCommand($"DELETE FROM {tabela} WHERE id = @id;", conexao, transacao))
             {
-                cmd4.Parameters.AddWithValue("id", id);
+                cmd4.Parameters.AddWithValue("id", company.id);
                 await cmd4.ExecuteNonQueryAsync();
             }
 

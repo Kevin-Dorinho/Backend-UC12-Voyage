@@ -10,6 +10,8 @@ public class Address
     public double lat { get; set; }
     public double @long { get; set; }
     public string url { get; set; }
+    public User user { get; set; }
+    public Company company { get; set; }
     public DateTime createdAt { get; set; }
     public DateTime updatedAt { get; set; }
 
@@ -72,12 +74,12 @@ public class Address
         }
     }
 
-    public static async Task<bool> ExisteAsync(int id)
+    public static async Task<bool> ExisteAsync(Address address)
     {
         string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("id", id);
+        comando.Parameters.AddWithValue("id", address.id);
         await conexao.OpenAsync();
         var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
         return count > 0;
@@ -99,34 +101,60 @@ public class Address
     {
         await ValidarAsync();
 
-        string query = $"""
-                       INSERT INTO {tabela}
-                       (place, number, zipcode, lat, `long`, url)
-                       VALUES
-                       (@place, @number, @zipcode, @lat, @long, @url);
-                       SELECT LAST_INSERT_ID();
-                       """;
-
-        using var conexao = new MySqlConnection(
-            ConfiguracaoBD.connectionString
-        );
-
-        using var comando = new MySqlCommand(query, conexao);
-
-        comando.Parameters.AddWithValue("place", place);
-        comando.Parameters.AddWithValue("number", number);
-        comando.Parameters.AddWithValue("zipcode", zipcode);
-        comando.Parameters.AddWithValue("lat", lat);
-        comando.Parameters.AddWithValue("long", @long);
-        comando.Parameters.AddWithValue("url", url);
-
+        using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         await conexao.OpenAsync();
-        var result = await comando.ExecuteScalarAsync();
-        if (result != null)
+        using var transacao = await conexao.BeginTransactionAsync();
+
+        try
         {
-            this.id = Convert.ToInt32(result);
+            string query = $"""
+                           INSERT INTO {tabela}
+                           (place, number, zipcode, lat, `long`, url)
+                           VALUES
+                           (@place, @number, @zipcode, @lat, @long, @url);
+                           SELECT LAST_INSERT_ID();
+                           """;
+
+            using var comando = new MySqlCommand(query, conexao, transacao);
+            comando.Parameters.AddWithValue("place", place);
+            comando.Parameters.AddWithValue("number", number);
+            comando.Parameters.AddWithValue("zipcode", zipcode);
+            comando.Parameters.AddWithValue("lat", lat);
+            comando.Parameters.AddWithValue("long", @long);
+            comando.Parameters.AddWithValue("url", url);
+
+            var result = await comando.ExecuteScalarAsync();
+            if (result != null)
+            {
+                this.id = Convert.ToInt32(result);
+            }
+
+            if (this.user != null && this.user.id > 0)
+            {
+                string qUser = "INSERT INTO _addressUser (A, B) VALUES (@addressId, @userId);";
+                using var cmdU = new MySqlCommand(qUser, conexao, transacao);
+                cmdU.Parameters.AddWithValue("addressId", this.id);
+                cmdU.Parameters.AddWithValue("userId", this.user.id);
+                await cmdU.ExecuteNonQueryAsync();
+            }
+
+            if (this.company != null && this.company.id > 0)
+            {
+                string qComp = "INSERT INTO address_company (address_id, company_id) VALUES (@addressId, @companyId);";
+                using var cmdC = new MySqlCommand(qComp, conexao, transacao);
+                cmdC.Parameters.AddWithValue("addressId", this.id);
+                cmdC.Parameters.AddWithValue("companyId", this.company.id);
+                await cmdC.ExecuteNonQueryAsync();
+            }
+
+            await transacao.CommitAsync();
+            return this.id;
         }
-        return this.id;
+        catch
+        {
+            await transacao.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task EditarAsync()
@@ -394,13 +422,13 @@ public class Address
         return addresses;
     }
 
-    public static async Task AdicionarAoUsuarioAsync(int addressId, int userId)
+    public static async Task AdicionarAoUsuarioAsync(Address address, User user)
     {
         string query = "INSERT INTO _addressUser (A, B) VALUES (@addressId, @userId);";
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("addressId", addressId);
-        comando.Parameters.AddWithValue("userId", userId);
+        comando.Parameters.AddWithValue("addressId", address.id);
+        comando.Parameters.AddWithValue("userId", user.id);
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();
     }
@@ -421,7 +449,7 @@ public class Address
         return (-23.55052, -46.633308); // Default base coordinates (São Paulo)
     }
 
-    public static async Task DeletarAsync(int id)
+    public static async Task DeletarAsync(Address address)
     {
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         await conexao.OpenAsync();
@@ -431,21 +459,21 @@ public class Address
             string queryCleanCompany = "DELETE FROM address_company WHERE address_id = @id;";
             using (var cmd = new MySqlCommand(queryCleanCompany, conexao, transacao))
             {
-                cmd.Parameters.AddWithValue("id", id);
+                cmd.Parameters.AddWithValue("id", address.id);
                 await cmd.ExecuteNonQueryAsync();
             }
 
             string queryCleanUser = "DELETE FROM _addressUser WHERE A = @id;";
             using (var cmd = new MySqlCommand(queryCleanUser, conexao, transacao))
             {
-                cmd.Parameters.AddWithValue("id", id);
+                cmd.Parameters.AddWithValue("id", address.id);
                 await cmd.ExecuteNonQueryAsync();
             }
 
             string queryDeleteAddress = $"DELETE FROM {tabela} WHERE id = @id;";
             using (var cmd = new MySqlCommand(queryDeleteAddress, conexao, transacao))
             {
-                cmd.Parameters.AddWithValue("id", id);
+                cmd.Parameters.AddWithValue("id", address.id);
                 await cmd.ExecuteNonQueryAsync();
             }
 

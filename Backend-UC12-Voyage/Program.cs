@@ -246,8 +246,8 @@ async Task ExcluirUsuario()
     {
         Console.Write("ID do Usuário a excluir: ");
         int id = int.Parse(Console.ReadLine() ?? "0");
-        User u = new User();
-        await u.ExcluirAsync(id);
+        User u = new User { id = id };
+        await u.ExcluirAsync(u);
         Console.WriteLine("Excluído com sucesso (se existia)!");
     }
     catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
@@ -338,8 +338,8 @@ async Task ExcluirEmpresa()
     {
         Console.Write("ID da Empresa a excluir: ");
         int id = int.Parse(Console.ReadLine() ?? "0");
-        Company c = new Company();
-        await c.DeletarAsync(id);
+        Company c = new Company { id = id };
+        await c.DeletarAsync(c);
         Console.WriteLine("Excluída com sucesso (se existia)!");
     }
     catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
@@ -361,6 +361,14 @@ async Task InserirEndereco()
         Console.Write("Latitude: "); a.lat = double.Parse(Console.ReadLine() ?? "0");
         Console.Write("Longitude: "); a.@long = double.Parse(Console.ReadLine() ?? "0");
         Console.Write("URL: "); a.url = Console.ReadLine() ?? "";
+
+        Console.Write("User ID Vinculado (0 se nenhum): "); 
+        int userId = int.Parse(Console.ReadLine() ?? "0");
+        if (userId > 0) a.user = new User { id = userId };
+
+        Console.Write("Company ID Vinculada (0 se nenhuma): ");
+        int companyId = int.Parse(Console.ReadLine() ?? "0");
+        if (companyId > 0) a.company = new Company { id = companyId };
 
         await a.InserirAsync();
         Console.WriteLine($"Endereço inserido com sucesso! ID: {a.id}");
@@ -426,7 +434,8 @@ async Task ExcluirEndereco()
     {
         Console.Write("ID do Endereço a excluir: ");
         int id = int.Parse(Console.ReadLine() ?? "0");
-        await Address.DeletarAsync(id);
+        Address a = new Address { id = id };
+        await Address.DeletarAsync(a);
         Console.WriteLine("Excluído com sucesso (se existia)!");
     }
     catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }
@@ -520,8 +529,8 @@ async Task ExcluirPagamento()
     {
         Console.Write("ID do Pagamento a excluir: ");
         int id = int.Parse(Console.ReadLine() ?? "0");
-        Payment p = new Payment();
-        await p.ExcluirAsync(id);
+        Payment p = new Payment { id = id };
+        await p.ExcluirAsync(p);
         Console.WriteLine("Excluído com sucesso (se existia)!");
     }
     catch (Exception ex) { Console.WriteLine($"Erro: {ex.Message}"); }

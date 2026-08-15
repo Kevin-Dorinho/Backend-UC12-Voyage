@@ -43,12 +43,12 @@ public class User
         return Convert.ToHexString(bytes).ToLower();
     }
 
-    public static async Task<bool> ExisteAsync(int id)
+    public static async Task<bool> ExisteAsync(User user)
     {
         string query = $"SELECT COUNT(1) FROM {tabela} WHERE id = @id;";
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("id", id);
+        comando.Parameters.AddWithValue("id", user.id);
         await conexao.OpenAsync();
         var count = Convert.ToInt32(await comando.ExecuteScalarAsync());
         return count > 0;
@@ -174,7 +174,7 @@ public class User
         await comando.ExecuteNonQueryAsync();
     }
 
-    public async Task ExcluirAsync(int id)
+    public async Task ExcluirAsync(User user)
     {
         string query = $"""
                        DELETE FROM {tabela}
@@ -183,7 +183,7 @@ public class User
 
         using var conexao = new MySqlConnection(ConfiguracaoBD.connectionString);
         using var comando = new MySqlCommand(query, conexao);
-        comando.Parameters.AddWithValue("id", id);
+        comando.Parameters.AddWithValue("id", user.id);
 
         await conexao.OpenAsync();
         await comando.ExecuteNonQueryAsync();
